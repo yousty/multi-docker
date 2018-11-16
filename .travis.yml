@@ -1,0 +1,22 @@
+sudo: require
+services:
+  - docker
+
+before_install:
+  - docker build -t ncri/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run ncri/react-test npm run test -- --coverage
+
+after_success:
+  - docker build -t ncri/multi-client ./client
+  - docker build -t ncri/multi-nginx ./nginx
+  - docker build -t ncri/multi-server ./server
+  - docker build -t ncri/multi-worker ./worker
+  # Login to docker
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Push images to docker hub
+  - docker push ncri/multi-client
+  - docker push ncri/multi-nginx
+  - docker push ncri/multi-server
+  - docker push ncri/multi-worker
